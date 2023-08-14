@@ -52,16 +52,14 @@ class Canvas {
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     showMsg("Canvas Filled : " + color);
   }
-  drawImage(datas = []) {
-    datas.forEach((data) => {
-      const src = data[0];
-      const id = data[1];
-      const x = data[2];
-      const y = data[3];
-      const size = data[4];
-      showMsg("Draw Image : " + x + "," + y);
-      this.ctx.drawImage(src, id[0], id[1], 16, 16, x, y, size, size);
-    });
+  drawImage(data) {
+    const src = data[0];
+    const id = data[1];
+    const x = data[2];
+    const y = data[3];
+    const size = data[4];
+    showMsg("Draw Image : " + x + "," + y);
+    this.ctx.drawImage(src, id[0], id[1], 16, 16, x, y, size, size);
   }
 }
 
@@ -91,38 +89,12 @@ window.onload = async () => {
       return;
     }
     image1 = [sprite, dataSprite[id], canvas.width / 2, canvas.height / 2, 16];
-    image2 = [sprite, dataSprite[id], 0, 0, 16];
-    image = [image1, image2];
-    canvas.drawImage(image);
+    canvas.drawImage(image1);
     showText("Sprite id : " + id);
   };
 
   let ids = 0;
   window.onkeydown = (e) => {
-    const key = e.key;
-    if (ids > dataSprite.length - 1 || ids < 0) {
-      console.log("Out of range");
-    } else {
-      image1 = [
-        sprite,
-        dataSprite[ids],
-        canvas.width / 2,
-        canvas.height / 2,
-        16,
-      ];
-      image2 = [sprite, dataSprite[ids], 0, 0, 16];
-
-      image = [image1, image2];
-      canvas.drawImage(image);
-    }
-    if (key == "ArrowLeft") {
-      ids--;
-      input.value = ids;
-      showText(key + " Clicked ! sprite id : " + ids);
-    } else if (key == "ArrowRight") {
-      ids++;
-      input.value = ids;
-      showText(key + " Clicked ! sprite id : " + ids);
-    }
+    console.log(e.key);
   };
 };
