@@ -1,71 +1,84 @@
-const canvas = document.querySelector("canvas");
-const ctx = canvas.getContext("2d");
 const input = document.querySelector("#input");
 
 let showMessage = true;
 let resourceloaded = false;
+
+class Sprite {
+  constructor(src, size) {
+    this.src = new Image();
+    this.src.src = src;
+    this.size = size;
+    this.data = [];
+  }
+  load() {
+    showMsg("TryingLoad SpreadSheet");
+    return new Promise((resolve) => {
+      this.src.onload = () => {
+        showMsg("Done load SpreadSheet");
+        resourceloaded = true;
+        resolve(this.src);
+      };
+    });
+  }
+  async spread() {
+    const src = this.src;
+    const horiz = src.width;
+    const ver = src.height;
+    for (let x = 0; x < ver; x += this.size) {
+      for (let i = 0; i < horiz; i += this.size) {
+        this.data.push([i, x]);
+      }
+    }
+    showMsg("Spread SpriteSheet");
+    return this.data;
+  }
+}
+
+class Canvas {
+  constructor(w, h) {
+    this.canvas = document.querySelector("canvas");
+    this.ctx = this.canvas.getContext("2d");
+    this.width = w;
+    this.height = h;
+    this.createCanvas();
+  }
+  createCanvas() {
+    this.canvas.width = this.width;
+    this.canvas.height = this.height;
+    showMsg("Canvas Created");
+  }
+  fillCanvas(color = "black") {
+    this.ctx.fillStyle = color;
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    showMsg("Canvas Filled : " + color);
+  }
+  drawImage(datas = []) {
+    datas.forEach((data) => {
+      const src = data[0];
+      const id = data[1];
+      const x = data[2];
+      const y = data[3];
+      const size = data[4];
+      showMsg("Draw Image : " + x + "," + y);
+      this.ctx.drawImage(src, id[0], id[1], 16, 16, x, y, size, size);
+    });
+  }
+}
 
 function showMsg(msg) {
   if (showMessage) {
     console.log(msg);
   }
 }
-function createCanvas(w, h) {
-  canvas.width = w;
-  canvas.height = h;
-  showMsg("Canvas Created");
-}
-function fillCanvas(color = "black") {
-  ctx.fillStyle = color;
-  ctx.fillRect(0, 0, ctx.width, ctx.height);
-  showMsg("Canvas Filled : " + color);
-}
 
-function loadSpritesheet(link) {
-  const sprites = new Image();
-  sprites.src = link;
-  showMsg("TryingLoad SpreadSheet");
-  return new Promise((resolve) => {
-    sprites.onload = () => {
-      resolve(sprites);
-      showMsg("Done load SpreadSheet");
-      resourceloaded = true;
-    };
-  });
-}
-
-function spreadSpriteSheet(src, size = spriteSize) {
-  let data = [];
-
-  let horiz = src.width;
-  let ver = src.height;
-  for (let x = 0; x < ver; x += size) {
-    for (let i = 0; i < horiz; i += size) {
-      data.push([i, x]);
-    }
-  }
-  return data;
-}
-function drawImage(con, datas = []) {
-  console.log(datas);
-  datas.forEach((data) => {
-    const src = data[0];
-    const id = data[1];
-    const x = data[2];
-    const y = data[3];
-    const size = data[4];
-    showMsg("Draw Image : " + x + "," + y);
-    con.drawImage(src, id[0], id[1], 16, 16, x, y, size, size);
-  });
-}
 function showText(text) {
   document.querySelector("#p1").innerHTML = text;
 }
 window.onload = async () => {
-  createCanvas(480, 320);
-  const link = "./assets/chibi-layered.png";
-  const sprite = await loadSpritesheet(link);
-  const dataSprite = spreadSpriteSheet(sprite, 16);
+  const canvas = new Canvas(480, 320);
+  const sprt = new Sprite("./assets/chibi-layered.png", 16);
+  const sprite = await sprt.load();
+  const dataSprite = await sprt.spread();
 
   if (!resourceloaded) {
     console.log("Resource not loaded");
@@ -80,7 +93,7 @@ window.onload = async () => {
     image1 = [sprite, dataSprite[id], canvas.width / 2, canvas.height / 2, 16];
     image2 = [sprite, dataSprite[id], 0, 0, 16];
     image = [image1, image2];
-    drawImage(ctx, image);
+    canvas.drawImage(image);
     showText("Sprite id : " + id);
   };
 
@@ -100,7 +113,7 @@ window.onload = async () => {
       image2 = [sprite, dataSprite[ids], 0, 0, 16];
 
       image = [image1, image2];
-      drawImage(ctx, image);
+      canvas.drawImage(image);
     }
     if (key == "ArrowLeft") {
       ids--;
