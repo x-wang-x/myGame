@@ -1,39 +1,40 @@
 const canvas = document.querySelector("canvas");
 const ctx = canvas.getContext("2d");
-const startButton = document.getElementById("myBtn");
+const input = document.querySelector("#input");
 
-const input1 = document.querySelector("body > input.input1");
-const input2 = document.querySelector("body > input.input2");
+let showMessage = true;
+let resourceloaded = false;
 
-canvas.width = 480;
-canvas.height = 320;
-
-let spriteSize = 16;
-let spriteLoaded = [false, null];
-const delay = (delayInms) => {
-  return new Promise((resolve) => setTimeout(resolve, delayInms));
-};
-
-function clearScreen(color = "black") {
+function showMsg(msg) {
+  if (showMessage) {
+    console.log(msg);
+  }
+}
+function createCanvas(w, h) {
+  canvas.width = w;
+  canvas.height = h;
+  showMsg("Canvas Created");
+}
+function fillCanvas(color = "black") {
   ctx.fillStyle = color;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, ctx.width, ctx.height);
+  showMsg("Canvas Filled : " + color);
 }
 
-function loadSpritesheet(link = "./assets/Sprite-0001.png") {
+function loadSpritesheet(link) {
   const sprites = new Image();
   sprites.src = link;
-  sprites.onload = () => {
-    spriteLoaded = [true, sprites];
-    ctx.fillText("SXSXSX", 16, 16);
-  };
+  showMsg("TryingLoad SpreadSheet");
+  return new Promise((resolve) => {
+    sprites.onload = () => {
+      resolve(sprites);
+      showMsg("Done load SpreadSheet");
+      resourceloaded = true;
+    };
+  });
 }
-window.onload = () => {
-  console.log("Windows Loaded", Date.now());
-  ctx.fillText("SSSS", 160, 160);
-  loadSpritesheet();
-};
 
-function sprite(src, size = spriteSize) {
+function spreadSpriteSheet(src, size = spriteSize) {
   let data = [];
 
   let horiz = src.width;
@@ -43,50 +44,72 @@ function sprite(src, size = spriteSize) {
       data.push([i, x]);
     }
   }
-  console.log(data);
   return data;
 }
+function drawImage(con, datas = []) {
+  console.log(datas);
+  datas.forEach((data) => {
+    const src = data[0];
+    const id = data[1];
+    const x = data[2];
+    const y = data[3];
+    const size = data[4];
+    showMsg("Draw Image : " + x + "," + y);
+    con.drawImage(src, id[0], id[1], 16, 16, x, y, size, size);
+  });
+}
+function showText(text) {
+  document.querySelector("#p1").innerHTML = text;
+}
+window.onload = async () => {
+  createCanvas(480, 320);
+  const link = "./assets/chibi-layered.png";
+  const sprite = await loadSpritesheet(link);
+  const dataSprite = spreadSpriteSheet(sprite, 16);
 
-function mapper(src, data) {
-  const x = spriteLoaded;
-  console.log(x);
-  const sprites = sprite(x[1]);
-  data = data["mapData"];
-  let drawX = 0;
-  let drawY = 0;
-  const spriteXs = spriteSize;
-  const spriteYs = spriteSize;
-
-  for (i in data) {
-    const spriteX = sprites[parseInt(data[i]) - 1][0];
-    const spriteY = sprites[parseInt(data[i]) - 1][1];
-    if (drawX >= canvas.width) {
-      drawX = 0;
-      drawY += spriteSize;
-    }
-    ctx.drawImage(
-      x[1],
-      spriteX,
-      spriteY,
-      spriteXs,
-      spriteYs,
-      drawX,
-      drawY,
-      spriteSize,
-      spriteSize
-    );
-
-    drawX += spriteSize;
-
-    console.log(drawX, drawY, parseInt(data[i])) + 1;
+  if (!resourceloaded) {
+    console.log("Resource not loaded");
+    return;
   }
-}
+  document.querySelector("body > button").onclick = () => {
+    const id = parseInt(input.value);
+    if (id > dataSprite.length) {
+      console.log("Out of range");
+      return;
+    }
+    image1 = [sprite, dataSprite[id], canvas.width / 2, canvas.height / 2, 16];
+    image2 = [sprite, dataSprite[id], 0, 0, 16];
+    image = [image1, image2];
+    drawImage(ctx, image);
+    showText("Sprite id : " + id);
+  };
 
-function myFunction() {
-  fetch("./data.json")
-    .then((response) => response.json())
-    .then((json) => mapper("./assets/Sprite-0001.png", json));
-}
+  let ids = 0;
+  window.onkeydown = (e) => {
+    const key = e.key;
+    if (ids > dataSprite.length - 1 || ids < 0) {
+      console.log("Out of range");
+    } else {
+      image1 = [
+        sprite,
+        dataSprite[ids],
+        canvas.width / 2,
+        canvas.height / 2,
+        16,
+      ];
+      image2 = [sprite, dataSprite[ids], 0, 0, 16];
 
-startButton.addEventListener("click", myFunction);
-input2.addEventListener("click", clearScreen);
+      image = [image1, image2];
+      drawImage(ctx, image);
+    }
+    if (key == "ArrowLeft") {
+      ids--;
+      input.value = ids;
+      showText(key + " Clicked ! sprite id : " + ids);
+    } else if (key == "ArrowRight") {
+      ids++;
+      input.value = ids;
+      showText(key + " Clicked ! sprite id : " + ids);
+    }
+  };
+};
