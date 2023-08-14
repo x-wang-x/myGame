@@ -35,6 +35,44 @@ class Sprite {
       resolve(this.data);
     });
   }
+  async mapper(canvas, mapdata) {
+    const resData = (await fetch(mapdata)).json();
+    const sprite = await this.load();
+    const sprites = await this.spread();
+    if (sprites.length <= 0) {
+      showMsg("Sprite data not found");
+      return;
+    }
+
+    const data = await resData;
+    const width = parseInt(data["pixelSize"]) * parseInt(data["tileSize"][0]);
+    const height = parseInt(data["pixelSize"]) * parseInt(data["tileSize"][1]);
+    const map = data["mapData"];
+    let drawX = 0;
+    let drawY = 0;
+    const spriteXs = this.size;
+    const spriteYs = this.size;
+    if (data.length >= width * height) {
+      showMsg("Map data too large");
+      return;
+    }
+    if (data.length <= width * height) {
+      showMsg("Map data too small");
+      return;
+    }
+    for (let i in map) {
+      const spriteX = await sprites[parseInt(map[i]) - 1][0];
+      const spriteY = await sprites[parseInt(map[i]) - 1][1];
+      if (drawX >= width) {
+        drawX = 0;
+        drawY += this.size;
+      }
+      const image1 = [sprite, [spriteX, spriteY], drawX, drawY, 16];
+      canvas.drawImage(image1);
+      drawX += this.size;
+    }
+    showMsg("Mapper Done");
+  }
 }
 
 class Canvas {
@@ -62,13 +100,14 @@ class Canvas {
     const y = data[3];
     const size = data[4];
     showMsg("Draw Image : " + x + "," + y);
-    this.ctx.drawImage(src, id[0], id[1], 16, 16, x, y, size, size);
+    this.ctx.drawImage(src, id[0], id[1], size, size, x, y, size, size);
   }
 }
 
 function showMsg(msg) {
   if (showMessage) {
     console.log(msg);
+    document.querySelector("#p1").innerHTML = msg;
   }
 }
 
@@ -80,7 +119,8 @@ window.onload = async () => {
   const sprt = new Sprite("./assets/chibi-layered.png", 16);
   const sprite = await sprt.load();
   const dataSprite = await sprt.spread();
-  canvas.fillCanvas();
+  const map = new Sprite("./assets/Sprite-0001.png", 16);
+  await map.mapper(canvas, "./data.json");
   if (!resourceloaded) {
     showMsg("Resource not loaded");
     return;
@@ -95,4 +135,7 @@ window.onload = async () => {
     canvas.drawImage(image1);
     showText("Sprite id : " + id);
   };
+  setTimeout(() => {
+    document.querySelector("#p1").innerHTML = "";
+  }, 5000);
 };
