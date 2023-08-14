@@ -5,32 +5,35 @@ let resourceloaded = false;
 
 class Sprite {
   constructor(src, size) {
-    this.src = new Image();
-    this.src.src = src;
+    this.src = src;
+    this.sprite = new Image();
+    this.sprite.src = src;
     this.size = size;
     this.data = [];
   }
   load() {
     showMsg("TryingLoad SpreadSheet");
     return new Promise((resolve) => {
-      this.src.onload = () => {
-        showMsg("Done load SpreadSheet");
+      this.sprite.onload = () => {
+        showMsg("Done load SpreadSheet : " + this.src);
         resourceloaded = true;
-        resolve(this.src);
+        resolve(this.sprite);
       };
     });
   }
-  async spread() {
-    const src = this.src;
-    const horiz = src.width;
-    const ver = src.height;
-    for (let x = 0; x < ver; x += this.size) {
-      for (let i = 0; i < horiz; i += this.size) {
-        this.data.push([i, x]);
+  spread() {
+    return new Promise((resolve) => {
+      const src = this.sprite;
+      const horiz = src.width;
+      const ver = src.height;
+      for (let x = 0; x < ver; x += this.size) {
+        for (let i = 0; i < horiz; i += this.size) {
+          this.data.push([i, x]);
+        }
       }
-    }
-    showMsg("Spread SpriteSheet");
-    return this.data;
+      showMsg("SpreadSheet Data : " + this.data.length + " data");
+      resolve(this.data);
+    });
   }
 }
 
@@ -77,24 +80,19 @@ window.onload = async () => {
   const sprt = new Sprite("./assets/chibi-layered.png", 16);
   const sprite = await sprt.load();
   const dataSprite = await sprt.spread();
-
+  canvas.fillCanvas();
   if (!resourceloaded) {
-    console.log("Resource not loaded");
+    showMsg("Resource not loaded");
     return;
   }
   document.querySelector("body > button").onclick = () => {
     const id = parseInt(input.value);
-    if (id > dataSprite.length) {
-      console.log("Out of range");
+    if (id > dataSprite.length - 1) {
+      showMsg("Sprite id not found");
       return;
     }
     image1 = [sprite, dataSprite[id], canvas.width / 2, canvas.height / 2, 16];
     canvas.drawImage(image1);
     showText("Sprite id : " + id);
-  };
-
-  let ids = 0;
-  window.onkeydown = (e) => {
-    console.log(e.key);
   };
 };
